@@ -10,11 +10,14 @@ import generatedImage from '@assets/generated_images/deep_space_nebula_backgroun
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
+import { VisualEffects } from './VisualEffects';
+
 export function GameContainer() {
   const {
     gameState,
     playerX,
     gameObjects,
+    effects,
     startGame,
     resetGame,
     setMovement
@@ -113,6 +116,7 @@ export function GameContainer() {
                     </div>
                   ))}
                   
+                  <VisualEffects effects={effects} />
                   <HUD gameState={gameState} />
                 </>
               )}

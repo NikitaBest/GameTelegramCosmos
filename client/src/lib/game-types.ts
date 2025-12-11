@@ -10,6 +10,14 @@ export interface GameObject {
   height: number;
 }
 
+export interface GameEffect {
+  id: number;
+  type: 'score' | 'damage';
+  x: number;
+  y: number;
+  text?: string;
+}
+
 export interface GameState {
   score: number;
   lives: number;
@@ -24,6 +32,6 @@ export interface GameState {
 
 export const GAME_WIDTH = 800; // Conceptual width for logic
 export const GAME_HEIGHT = 600; // Conceptual height for logic
-export const SHIP_WIDTH = 60;
-export const SHIP_HEIGHT = 60;
+export const SHIP_WIDTH = 80; // Updated size
+export const SHIP_HEIGHT = 84; // Updated size (14% of 600)
 export const ITEM_SIZE = 40;

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { GameState, GameObject, GameObjectType, GAME_WIDTH, GAME_HEIGHT, SHIP_WIDTH, SHIP_HEIGHT, ITEM_SIZE } from '../lib/game-types';
+import { GameState, GameObject, GameObjectType, GameEffect, GAME_WIDTH, GAME_HEIGHT, SHIP_WIDTH, SHIP_HEIGHT, ITEM_SIZE } from '../lib/game-types';
 
 const INITIAL_STATE: GameState = {
   score: 0,
@@ -17,6 +17,7 @@ export function useGameLogic() {
   const [gameState, setGameState] = useState<GameState>(INITIAL_STATE);
   const [playerX, setPlayerX] = useState(GAME_WIDTH / 2 - SHIP_WIDTH / 2);
   const [gameObjects, setGameObjects] = useState<GameObject[]>([]);
+  const [effects, setEffects] = useState<GameEffect[]>([]);
   
   // Refs for loop to avoid dependency staleness
   const stateRef = useRef(gameState);
@@ -25,15 +26,22 @@ export function useGameLogic() {
   const requestRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
   const spawnTimerRef = useRef<number>(0);
-
-  // New ref to track movement input state (left/right pressed)
-  // -1 = left, 0 = none, 1 = right
   const movementRef = useRef<number>(0);
 
   // Sync refs
   useEffect(() => { stateRef.current = gameState; }, [gameState]);
   useEffect(() => { playerXRef.current = playerX; }, [playerX]);
   useEffect(() => { objectsRef.current = gameObjects; }, [gameObjects]);
+
+  // Cleanup effects
+  useEffect(() => {
+    if (effects.length > 0) {
+      const timer = setTimeout(() => {
+        setEffects(prev => prev.filter(e => Date.now() - e.id < 1000));
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [effects]);
 
   const gameLoop = (time: number) => {
     if (!stateRef.current.isPlaying || stateRef.current.isPaused || stateRef.current.isGameOver) {
@@ -44,24 +52,20 @@ export function useGameLogic() {
     const deltaTime = time - lastTimeRef.current;
     lastTimeRef.current = time;
 
-    // --- PLAYER MOVEMENT ---
-    // Smooth continuous movement based on input state
+    // Movement
     if (movementRef.current !== 0) {
-      const speed = 12 * (deltaTime / 16); // Normalize speed based on frame time
+      const speed = 12 * (deltaTime / 16); 
       const newX = playerXRef.current + (movementRef.current * speed);
       const clampedX = Math.max(0, Math.min(GAME_WIDTH - SHIP_WIDTH, newX));
       
-      // Update state if changed
       if (clampedX !== playerXRef.current) {
         setPlayerX(clampedX);
       }
     }
 
-    // --- GAME LOGIC ---
-
     // Spawn objects
     spawnTimerRef.current += deltaTime;
-    const spawnRate = Math.max(500, 2000 - (stateRef.current.level * 100)); // Spawns faster as level increases
+    const spawnRate = Math.max(500, 2000 - (stateRef.current.level * 100)); 
     
     if (spawnTimerRef.current > spawnRate) {
       spawnObject();
@@ -76,13 +80,13 @@ export function useGameLogic() {
 
     checkCollisions();
 
-    // Loop
     requestRef.current = requestAnimationFrame(gameLoop);
   };
 
   const startGame = useCallback(() => {
     setGameState({ ...INITIAL_STATE, isPlaying: true });
     setGameObjects([]);
+    setEffects([]);
     setPlayerX(GAME_WIDTH / 2 - SHIP_WIDTH / 2);
     lastTimeRef.current = performance.now();
     movementRef.current = 0;
@@ -91,7 +95,6 @@ export function useGameLogic() {
     requestRef.current = requestAnimationFrame(gameLoop);
   }, []);
 
-  // Update movement state rather than direct position
   const setMovement = useCallback((direction: 'left' | 'right' | 'stop') => {
     if (direction === 'left') movementRef.current = -1;
     else if (direction === 'right') movementRef.current = 1;
@@ -101,9 +104,6 @@ export function useGameLogic() {
   const spawnObject = () => {
     const rand = Math.random();
     let type: GameObjectType = 'star';
-    
-    // Spawn probabilities - SIMPLIFIED as requested
-    // 50% chance of Star (Good), 50% chance of Asteroid (Bad)
     if (rand > 0.5) type = 'asteroid';
     else type = 'star';
 
@@ -112,7 +112,7 @@ export function useGameLogic() {
       type,
       x: Math.random() * (GAME_WIDTH - ITEM_SIZE),
       y: -ITEM_SIZE,
-      speed: (Math.random() * 2 + 2) * stateRef.current.gameSpeed, // Base speed * game speed
+      speed: (Math.random() * 2 + 2) * stateRef.current.gameSpeed,
       width: ITEM_SIZE,
       height: ITEM_SIZE,
     };
@@ -122,17 +122,15 @@ export function useGameLogic() {
 
   const checkCollisions = () => {
     const shipRect = {
-      x: playerXRef.current + 10, // Hitbox adjustment
+      x: playerXRef.current + 10,
       y: GAME_HEIGHT - SHIP_HEIGHT - 10,
       width: SHIP_WIDTH - 20,
       height: SHIP_HEIGHT - 20
     };
 
     const newObjects = objectsRef.current.filter(obj => {
-      // Check bounds
       if (obj.y > GAME_HEIGHT) return false;
 
-      // Check collision
       const objRect = { x: obj.x, y: obj.y, width: obj.width, height: obj.height };
       
       const isColliding = (
@@ -144,7 +142,7 @@ export function useGameLogic() {
 
       if (isColliding) {
         handleCollision(obj);
-        return false; // Remove object
+        return false; 
       }
 
       return true;
@@ -159,24 +157,29 @@ export function useGameLogic() {
     const currentState = stateRef.current;
     let newState = { ...currentState };
 
+    // Add visual effect
+    const effectX = playerXRef.current + SHIP_WIDTH / 2 - 20; // Center effect on ship
+    const effectY = GAME_HEIGHT - SHIP_HEIGHT / 2 - 20;
+
     switch (obj.type) {
       case 'star':
         newState.score += 10;
+        setEffects(prev => [...prev, { id: Date.now(), type: 'score', x: effectX, y: effectY, text: '+10' }]);
         break;
       case 'asteroid':
         newState.lives -= 1;
+        setEffects(prev => [...prev, { id: Date.now(), type: 'damage', x: effectX, y: effectY, text: '-1 ❤' }]);
         break;
-      // Other cases removed/ignored as they shouldn't spawn
     }
 
-    // Level up logic
+    // Level up
     const newLevel = Math.floor(newState.score / 1000) + 1;
     if (newLevel > newState.level) {
       newState.level = newLevel;
       newState.gameSpeed += 0.2;
     }
 
-    // Game Over logic
+    // Game Over
     if (newState.lives <= 0) {
       newState.isGameOver = true;
       newState.isPlaying = false;
@@ -186,7 +189,6 @@ export function useGameLogic() {
     setGameState(newState);
   };
 
-  // Cleanup
   useEffect(() => {
     return () => {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
@@ -205,9 +207,10 @@ export function useGameLogic() {
     gameState,
     playerX,
     gameObjects,
+    effects,
     startGame,
     pauseGame,
     resetGame,
-    setMovement // Exporting new control function
+    setMovement
   };
 }
