@@ -91,8 +91,8 @@ export function GameContainer() {
                     className="absolute bottom-32 md:bottom-4 z-20 transition-transform duration-75"
                     style={{ 
                       left: `${(playerX / GAME_WIDTH) * 100}%`,
-                      width: `${(60 / GAME_WIDTH) * 100}%`, // approximate width relative to game width
-                      height: '10%', // approximate height
+                      width: `${(80 / GAME_WIDTH) * 100}%`, // approximate width relative to game width
+                      height: '14%', // approximate height
                     }}
                   >
                      <Spaceship x={0} /* x is handled by parent div style */ /> 
@@ -136,26 +136,26 @@ export function GameContainer() {
         <div className="absolute bottom-0 left-0 w-full p-6 pb-8 flex justify-between gap-4 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-none">
           <Button 
             variant="outline"
-            className="flex-1 h-24 bg-white/10 active:bg-cyan-500/40 border-white/20 rounded-2xl backdrop-blur-sm transition-all active:scale-95 touch-none select-none pointer-events-auto"
+            className="flex-1 h-20 bg-white/10 active:bg-cyan-500/40 border-white/20 rounded-2xl backdrop-blur-sm transition-all active:scale-95 touch-none select-none pointer-events-auto"
             onMouseDown={handleTouchStart('left')}
             onMouseUp={handleTouchEnd}
             onMouseLeave={handleTouchEnd}
             onTouchStart={handleTouchStart('left')}
             onTouchEnd={handleTouchEnd}
           >
-            <ArrowLeft className="w-12 h-12 text-white" />
+            <ArrowLeft className="w-10 h-10 text-white" />
           </Button>
           
           <Button 
             variant="outline"
-            className="flex-1 h-24 bg-white/10 active:bg-cyan-500/40 border-white/20 rounded-2xl backdrop-blur-sm transition-all active:scale-95 touch-none select-none pointer-events-auto"
+            className="flex-1 h-20 bg-white/10 active:bg-cyan-500/40 border-white/20 rounded-2xl backdrop-blur-sm transition-all active:scale-95 touch-none select-none pointer-events-auto"
             onMouseDown={handleTouchStart('right')}
             onMouseUp={handleTouchEnd}
             onMouseLeave={handleTouchEnd}
             onTouchStart={handleTouchStart('right')}
             onTouchEnd={handleTouchEnd}
           >
-            <ArrowRight className="w-12 h-12 text-white" />
+            <ArrowRight className="w-10 h-10 text-white" />
           </Button>
         </div>
       )}
