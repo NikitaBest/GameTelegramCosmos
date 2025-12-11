@@ -57,12 +57,13 @@ export function GameContainer() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-black overflow-hidden relative touch-none">
+    <div className="flex flex-col items-center justify-center h-[100dvh] w-full bg-black overflow-hidden relative touch-none">
       {/* Game Area Wrapper - Handles aspect ratio and scaling */}
-      <div className="w-full max-w-4xl px-2 flex-1 flex items-center justify-center relative">
+      {/* On mobile: flex-1 w-full relative (fills screen). On desktop: constrained */}
+      <div className="w-full h-full md:max-w-4xl md:h-auto md:px-2 md:flex-1 md:flex md:items-center md:justify-center relative">
         <div 
           ref={containerRef}
-          className="relative overflow-hidden rounded-xl shadow-[0_0_50px_rgba(8,145,178,0.2)] bg-black ring-1 ring-white/10 w-full aspect-[4/3] md:aspect-auto md:h-[600px] md:w-[800px]"
+          className="relative overflow-hidden md:rounded-xl md:shadow-[0_0_50px_rgba(8,145,178,0.2)] bg-black md:ring-1 md:ring-white/10 w-full h-full md:aspect-auto md:h-[600px] md:w-[800px]"
         >
           {/* Inner container to scale logic coordinates to visual size */}
           <div className="absolute inset-0 w-full h-full">
@@ -87,7 +88,7 @@ export function GameContainer() {
                 <>
                   {/* Spaceship mapped from 0-800 to 0-100% */}
                   <div 
-                    className="absolute bottom-4 z-20 transition-transform duration-75"
+                    className="absolute bottom-20 md:bottom-4 z-20 transition-transform duration-75"
                     style={{ 
                       left: `${(playerX / GAME_WIDTH) * 100}%`,
                       width: `${(60 / GAME_WIDTH) * 100}%`, // approximate width relative to game width
@@ -130,11 +131,12 @@ export function GameContainer() {
       </div>
 
       {/* Mobile Controls Overlay - Only visible during gameplay */}
+      {/* Positioned absolutely at bottom for full screen mobile feel */}
       {gameState.isPlaying && !gameState.isGameOver && (
-        <div className="w-full max-w-lg p-6 pb-12 flex justify-between gap-4 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="absolute bottom-0 left-0 w-full p-6 pb-8 flex justify-between gap-4 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-none">
           <Button 
             variant="outline"
-            className="flex-1 h-24 bg-white/10 active:bg-cyan-500/40 border-white/20 rounded-2xl backdrop-blur-sm transition-all active:scale-95 touch-none select-none"
+            className="flex-1 h-24 bg-white/10 active:bg-cyan-500/40 border-white/20 rounded-2xl backdrop-blur-sm transition-all active:scale-95 touch-none select-none pointer-events-auto"
             onMouseDown={handleTouchStart('left')}
             onMouseUp={handleTouchEnd}
             onMouseLeave={handleTouchEnd}
@@ -146,7 +148,7 @@ export function GameContainer() {
           
           <Button 
             variant="outline"
-            className="flex-1 h-24 bg-white/10 active:bg-cyan-500/40 border-white/20 rounded-2xl backdrop-blur-sm transition-all active:scale-95 touch-none select-none"
+            className="flex-1 h-24 bg-white/10 active:bg-cyan-500/40 border-white/20 rounded-2xl backdrop-blur-sm transition-all active:scale-95 touch-none select-none pointer-events-auto"
             onMouseDown={handleTouchStart('right')}
             onMouseUp={handleTouchEnd}
             onMouseLeave={handleTouchEnd}
