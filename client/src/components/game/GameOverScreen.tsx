@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { RotateCcw, Share2, Trophy } from 'lucide-react';
+import { RotateCcw, Trophy } from 'lucide-react';
 
 interface GameOverScreenProps {
   score: number;
@@ -24,24 +24,14 @@ export function GameOverScreen({ score, onRestart }: GameOverScreenProps) {
         </div>
       </div>
 
-      <div className="flex gap-4">
-        <Button 
-          onClick={onRestart}
-          size="lg"
-          className="font-display bg-cyan-600 hover:bg-cyan-500 min-w-[160px]"
-        >
-          <RotateCcw className="mr-2 h-4 w-4" />
-          Заново
-        </Button>
-        <Button 
-          variant="outline" 
-          size="lg"
-          className="font-display border-white/20 hover:bg-white/10 text-white min-w-[160px]"
-        >
-          <Share2 className="mr-2 h-4 w-4" />
-          Поделиться
-        </Button>
-      </div>
+      <Button 
+        onClick={onRestart}
+        size="lg"
+        className="font-display bg-cyan-600 hover:bg-cyan-500 min-w-[160px] rounded-full px-8 py-6"
+      >
+        <RotateCcw className="mr-2 h-4 w-4" />
+        Заново
+      </Button>
     </div>
   );
 }

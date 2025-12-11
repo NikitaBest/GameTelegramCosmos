@@ -9,6 +9,7 @@ import { GAME_WIDTH, GAME_HEIGHT, SHIP_WIDTH, SHIP_HEIGHT } from '../../lib/game
 import generatedImage from '@assets/generated_images/deep_space_nebula_background.png';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { getStableViewportHeight, isTelegramWebApp } from '../../lib/telegram';
 
 import { VisualEffects } from './VisualEffects';
 
@@ -59,8 +60,16 @@ export function GameContainer() {
     setMovement('stop');
   };
 
+  // Use Telegram viewport height if available, otherwise use dynamic viewport height
+  const viewportHeight = isTelegramWebApp() 
+    ? getStableViewportHeight() 
+    : typeof window !== 'undefined' ? window.innerHeight : 600;
+
   return (
-    <div className="flex flex-col items-center justify-center h-[100dvh] w-full bg-black overflow-hidden relative touch-none">
+    <div 
+      className="flex flex-col items-center justify-center w-full bg-black overflow-hidden relative touch-none"
+      style={{ height: `${viewportHeight}px` }}
+    >
       {/* Game Area Wrapper - Handles aspect ratio and scaling */}
       {/* On mobile: flex-1 w-full relative (fills screen). On desktop: constrained */}
       <div className="w-full h-full md:max-w-4xl md:h-auto md:px-2 md:flex-1 md:flex md:items-center md:justify-center relative">

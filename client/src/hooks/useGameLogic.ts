@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { GameState, GameObject, GameObjectType, GameEffect, GAME_WIDTH, GAME_HEIGHT, SHIP_WIDTH, SHIP_HEIGHT, ITEM_SIZE } from '../lib/game-types';
+import { haptic } from '../lib/telegram';
 
 const INITIAL_STATE: GameState = {
   score: 0,
@@ -125,17 +126,36 @@ export function useGameLogic() {
   };
 
   const checkCollisions = () => {
+    // More precise collision box for ship - centered and tighter
+    const shipCenterX = playerXRef.current + SHIP_WIDTH / 2;
+    const shipCenterY = GAME_HEIGHT - SHIP_HEIGHT / 2;
+    const shipCollisionWidth = SHIP_WIDTH * 0.7; // 70% of ship width for more precise collision
+    const shipCollisionHeight = SHIP_HEIGHT * 0.7; // 70% of ship height for more precise collision
+    
     const shipRect = {
-      x: playerXRef.current + 10,
-      y: GAME_HEIGHT - SHIP_HEIGHT - 10,
-      width: SHIP_WIDTH - 20,
-      height: SHIP_HEIGHT - 20
+      x: shipCenterX - shipCollisionWidth / 2,
+      y: shipCenterY - shipCollisionHeight / 2,
+      width: shipCollisionWidth,
+      height: shipCollisionHeight
     };
 
     const newObjects = objectsRef.current.filter(obj => {
       if (obj.y > GAME_HEIGHT) return false;
 
-      const objRect = { x: obj.x, y: obj.y, width: obj.width, height: obj.height };
+      // More precise collision box for objects - smaller than visual size
+      // Stars and other items have smaller collision boxes for better precision
+      const objectCollisionScale = obj.type === 'asteroid' ? 0.75 : 0.6; // Comets slightly larger collision, stars smaller
+      const objCollisionWidth = obj.width * objectCollisionScale;
+      const objCollisionHeight = obj.height * objectCollisionScale;
+      const objCenterX = obj.x + obj.width / 2;
+      const objCenterY = obj.y + obj.height / 2;
+      
+      const objRect = { 
+        x: objCenterX - objCollisionWidth / 2,
+        y: objCenterY - objCollisionHeight / 2,
+        width: objCollisionWidth,
+        height: objCollisionHeight
+      };
       
       const isColliding = (
         shipRect.x < objRect.x + objRect.width &&
@@ -169,10 +189,12 @@ export function useGameLogic() {
       case 'star':
         newState.score += 10;
         setEffects(prev => [...prev, { id: Date.now(), type: 'score', x: effectX, y: effectY, text: '+10' }]);
+        haptic.light(); // Light haptic feedback for collecting star
         break;
       case 'asteroid':
         newState.lives -= 1;
         setEffects(prev => [...prev, { id: Date.now(), type: 'damage', x: effectX, y: effectY, text: '-1 ❤' }]);
+        haptic.medium(); // Medium haptic feedback for damage
         break;
     }
 
@@ -188,6 +210,7 @@ export function useGameLogic() {
       newState.isGameOver = true;
       newState.isPlaying = false;
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
+      haptic.error(); // Error haptic feedback for game over
     }
 
     setGameState(newState);
