@@ -88,7 +88,7 @@ export function GameContainer() {
                 <>
                   {/* Spaceship mapped from 0-800 to 0-100% */}
                   <div 
-                    className="absolute bottom-20 md:bottom-4 z-20 transition-transform duration-75"
+                    className="absolute bottom-32 md:bottom-4 z-20 transition-transform duration-75"
                     style={{ 
                       left: `${(playerX / GAME_WIDTH) * 100}%`,
                       width: `${(60 / GAME_WIDTH) * 100}%`, // approximate width relative to game width
