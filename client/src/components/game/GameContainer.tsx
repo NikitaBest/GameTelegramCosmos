@@ -129,32 +129,34 @@ export function GameContainer() {
         </div>
       </div>
 
-      {/* Mobile Controls Overlay */}
-      <div className="w-full max-w-lg p-6 pb-12 flex justify-between gap-4 z-50">
-        <Button 
-          variant="outline"
-          className="flex-1 h-24 bg-white/10 active:bg-cyan-500/40 border-white/20 rounded-2xl backdrop-blur-sm transition-all active:scale-95 touch-none select-none"
-          onMouseDown={handleTouchStart('left')}
-          onMouseUp={handleTouchEnd}
-          onMouseLeave={handleTouchEnd}
-          onTouchStart={handleTouchStart('left')}
-          onTouchEnd={handleTouchEnd}
-        >
-          <ArrowLeft className="w-12 h-12 text-white" />
-        </Button>
-        
-        <Button 
-          variant="outline"
-          className="flex-1 h-24 bg-white/10 active:bg-cyan-500/40 border-white/20 rounded-2xl backdrop-blur-sm transition-all active:scale-95 touch-none select-none"
-          onMouseDown={handleTouchStart('right')}
-          onMouseUp={handleTouchEnd}
-          onMouseLeave={handleTouchEnd}
-          onTouchStart={handleTouchStart('right')}
-          onTouchEnd={handleTouchEnd}
-        >
-          <ArrowRight className="w-12 h-12 text-white" />
-        </Button>
-      </div>
+      {/* Mobile Controls Overlay - Only visible during gameplay */}
+      {gameState.isPlaying && !gameState.isGameOver && (
+        <div className="w-full max-w-lg p-6 pb-12 flex justify-between gap-4 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <Button 
+            variant="outline"
+            className="flex-1 h-24 bg-white/10 active:bg-cyan-500/40 border-white/20 rounded-2xl backdrop-blur-sm transition-all active:scale-95 touch-none select-none"
+            onMouseDown={handleTouchStart('left')}
+            onMouseUp={handleTouchEnd}
+            onMouseLeave={handleTouchEnd}
+            onTouchStart={handleTouchStart('left')}
+            onTouchEnd={handleTouchEnd}
+          >
+            <ArrowLeft className="w-12 h-12 text-white" />
+          </Button>
+          
+          <Button 
+            variant="outline"
+            className="flex-1 h-24 bg-white/10 active:bg-cyan-500/40 border-white/20 rounded-2xl backdrop-blur-sm transition-all active:scale-95 touch-none select-none"
+            onMouseDown={handleTouchStart('right')}
+            onMouseUp={handleTouchEnd}
+            onMouseLeave={handleTouchEnd}
+            onTouchStart={handleTouchStart('right')}
+            onTouchEnd={handleTouchEnd}
+          >
+            <ArrowRight className="w-12 h-12 text-white" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
