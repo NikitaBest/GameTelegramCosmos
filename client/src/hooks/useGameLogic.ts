@@ -64,20 +64,35 @@ export function useGameLogic() {
       }
     }
 
-    // Spawn objects
+    // Spawn objects - increase spawn rate every 100 points
     spawnTimerRef.current += deltaTime;
-    const spawnRate = Math.max(500, 2000 - (stateRef.current.level * 100)); 
+    const score = stateRef.current.score;
+    const spawnRateMultiplier = Math.floor(score / 100); // Every 100 points
+    // Base spawn rate: 1800ms, decreases by 200ms every 100 points, minimum 300ms
+    const spawnRate = Math.max(300, 1800 - (spawnRateMultiplier * 200)); 
     
     if (spawnTimerRef.current > spawnRate) {
-      spawnObject();
+      // Spawn multiple objects based on score - more aggressive
+      // After 100 points: 2 objects, after 200: 2-3, after 300: 3, etc.
+      const objectsToSpawn = Math.max(1, Math.floor(spawnRateMultiplier / 2) + 1);
+      for (let i = 0; i < objectsToSpawn; i++) {
+        spawnObject();
+      }
       spawnTimerRef.current = 0;
     }
 
-    // Move objects
-    setGameObjects(prev => prev.map(obj => ({
-      ...obj,
-      y: obj.y + obj.speed
-    })));
+    // Move objects - apply current game speed to all objects
+    // Use deltaTime for smooth movement and apply gameSpeed multiplier
+    const currentSpeed = stateRef.current.gameSpeed;
+    const speedMultiplier = deltaTime / 16; // Normalize to 60fps
+    setGameObjects(prev => prev.map(obj => {
+      // Apply current game speed to object's base speed with deltaTime
+      const actualSpeed = obj.speed * currentSpeed * speedMultiplier;
+      return {
+        ...obj,
+        y: obj.y + actualSpeed
+      };
+    }));
 
     checkCollisions();
 
@@ -112,12 +127,14 @@ export function useGameLogic() {
     const isComet = type === 'asteroid';
     const objectSize = isComet ? ITEM_SIZE * 1.8 : ITEM_SIZE; // Comet is 1.8x larger
 
+    // Store base speed (without gameSpeed multiplier) - speed will be applied in movement
+    const baseSpeed = Math.random() * 2 + 2; // Range: 2-4
     const object: GameObject = {
       id: Math.random().toString(36).substr(2, 9),
       type,
       x: Math.random() * (GAME_WIDTH - objectSize),
       y: -objectSize,
-      speed: (Math.random() * 2 + 2) * stateRef.current.gameSpeed,
+      speed: baseSpeed, // Base speed, gameSpeed multiplier applied in movement loop
       width: objectSize,
       height: objectSize,
     };
@@ -228,11 +245,19 @@ export function useGameLogic() {
         break;
     }
 
-    // Level up
+    // Speed increase every 50 points
+    const previousSpeedLevel = Math.floor(currentState.score / 50);
+    const newSpeedLevel = Math.floor(newState.score / 50);
+    
+    if (newSpeedLevel > previousSpeedLevel) {
+      // Increase speed every 50 points - more noticeable increase
+      newState.gameSpeed += 0.25; // Increase speed by 25% each time (was 15%)
+    }
+
+    // Level up (for display purposes, every 1000 points)
     const newLevel = Math.floor(newState.score / 1000) + 1;
     if (newLevel > newState.level) {
       newState.level = newLevel;
-      newState.gameSpeed += 0.2;
     }
 
     // Game Over
