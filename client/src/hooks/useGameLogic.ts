@@ -107,14 +107,18 @@ export function useGameLogic() {
     if (rand > 0.5) type = 'asteroid';
     else type = 'star';
 
+    // Comet (asteroid) is larger than other objects
+    const isComet = type === 'asteroid';
+    const objectSize = isComet ? ITEM_SIZE * 1.8 : ITEM_SIZE; // Comet is 1.8x larger
+
     const object: GameObject = {
       id: Math.random().toString(36).substr(2, 9),
       type,
-      x: Math.random() * (GAME_WIDTH - ITEM_SIZE),
-      y: -ITEM_SIZE,
+      x: Math.random() * (GAME_WIDTH - objectSize),
+      y: -objectSize,
       speed: (Math.random() * 2 + 2) * stateRef.current.gameSpeed,
-      width: ITEM_SIZE,
-      height: ITEM_SIZE,
+      width: objectSize,
+      height: objectSize,
     };
 
     setGameObjects(prev => [...prev, object]);

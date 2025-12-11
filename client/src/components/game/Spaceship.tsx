@@ -1,6 +1,4 @@
 import { motion } from 'framer-motion';
-import { Rocket } from 'lucide-react';
-import { SHIP_WIDTH, SHIP_HEIGHT } from '../../lib/game-types';
 
 interface SpaceshipProps {
   x: number;
@@ -18,10 +16,11 @@ export function Spaceship({ x }: SpaceshipProps) {
         <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[30%] h-[50%] bg-cyan-500 blur-lg opacity-80 animate-pulse" />
         <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-[15%] h-[40%] bg-white blur-md" />
         
-        {/* Ship Body - Using Lucide Rocket but styled */}
-        <Rocket 
-          className="w-full h-full text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.8)] fill-cyan-950" 
-          strokeWidth={1.5}
+        {/* Ship Body - Using custom car SVG */}
+        <img 
+          src="/car.svg"
+          alt="Spaceship"
+          className="w-full h-full object-contain drop-shadow-[0_0_10px_rgba(34,211,238,0.8)] scale-110 md:scale-100"
         />
         
         {/* Shield Effect (optional visual) */}

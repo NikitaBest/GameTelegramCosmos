@@ -5,7 +5,7 @@ import { FallingObject } from './FallingObject';
 import { HUD } from './HUD';
 import { StartScreen } from './StartScreen';
 import { GameOverScreen } from './GameOverScreen';
-import { GAME_WIDTH, GAME_HEIGHT } from '../../lib/game-types';
+import { GAME_WIDTH, GAME_HEIGHT, SHIP_WIDTH, SHIP_HEIGHT } from '../../lib/game-types';
 import generatedImage from '@assets/generated_images/deep_space_nebula_background.png';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
@@ -94,8 +94,8 @@ export function GameContainer() {
                     className="absolute bottom-32 md:bottom-4 z-20 transition-transform duration-75"
                     style={{ 
                       left: `${(playerX / GAME_WIDTH) * 100}%`,
-                      width: `${(80 / GAME_WIDTH) * 100}%`, // approximate width relative to game width
-                      height: '14%', // approximate height
+                      width: `${(SHIP_WIDTH / GAME_WIDTH) * 100}%`, // width relative to game width
+                      height: `${(SHIP_HEIGHT / GAME_HEIGHT) * 100}%`, // height relative to game height
                     }}
                   >
                      <Spaceship x={0} /* x is handled by parent div style */ /> 

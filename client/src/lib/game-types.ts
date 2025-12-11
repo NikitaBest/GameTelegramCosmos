@@ -32,6 +32,6 @@ export interface GameState {
 
 export const GAME_WIDTH = 800; // Conceptual width for logic
 export const GAME_HEIGHT = 600; // Conceptual height for logic
-export const SHIP_WIDTH = 80; // Updated size
-export const SHIP_HEIGHT = 84; // Updated size (14% of 600)
+export const SHIP_WIDTH = 120; // Updated size (increased for better visibility)
+export const SHIP_HEIGHT = 126; // Updated size (increased for better visibility)
 export const ITEM_SIZE = 40;
