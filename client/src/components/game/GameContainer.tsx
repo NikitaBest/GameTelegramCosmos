@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useGameLogic } from '../../hooks/useGameLogic';
 import { Spaceship } from './Spaceship';
 import { FallingObject } from './FallingObject';
@@ -7,8 +7,6 @@ import { StartScreen } from './StartScreen';
 import { GameOverScreen } from './GameOverScreen';
 import { GAME_WIDTH, GAME_HEIGHT, SHIP_WIDTH, SHIP_HEIGHT } from '../../lib/game-types';
 import generatedImage from '@assets/generated_images/deep_space_nebula_background.png';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { getStableViewportHeight, isTelegramWebApp } from '../../lib/telegram';
 
 import { VisualEffects } from './VisualEffects';
@@ -17,16 +15,117 @@ export function GameContainer() {
   const {
     gameState,
     playerX,
+    playerY,
     gameObjects,
     effects,
     startGame,
     resetGame,
-    setMovement
+    setMovement,
+    setPlayerPosition
   } = useGameLogic();
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef(false);
 
-  // Keyboard controls
+  // Convert screen coordinates to game coordinates
+  const screenToGameCoords = useCallback((screenX: number, screenY: number): [number, number] => {
+    if (!containerRef.current) return [playerX, playerY];
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    const relativeX = screenX - rect.left;
+    const relativeY = screenY - rect.top;
+    const percentageX = relativeX / rect.width;
+    const percentageY = relativeY / rect.height;
+    const gameX = percentageX * GAME_WIDTH - SHIP_WIDTH / 2;
+    const gameY = percentageY * GAME_HEIGHT - SHIP_HEIGHT / 2;
+    
+    // Clamp to game bounds
+    const clampedX = Math.max(0, Math.min(GAME_WIDTH - SHIP_WIDTH, gameX));
+    const clampedY = Math.max(0, Math.min(GAME_HEIGHT - SHIP_HEIGHT, gameY));
+    return [clampedX, clampedY];
+  }, [playerX, playerY]);
+
+  // Handle drag/touch start
+  const handlePointerStart = (e: React.TouchEvent | React.MouseEvent) => {
+    // Don't interfere with buttons or other interactive elements
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('[role="button"]')) {
+      return; // Let button handle its own click
+    }
+    
+    if (!gameState.isPlaying || gameState.isPaused) return;
+    e.preventDefault();
+    isDraggingRef.current = true;
+    
+    const clientX = 'touches' in e && e.touches.length > 0 
+      ? e.touches[0].clientX 
+      : 'clientX' in e ? e.clientX : 0;
+    const clientY = 'touches' in e && e.touches.length > 0 
+      ? e.touches[0].clientY 
+      : 'clientY' in e ? e.clientY : 0;
+    
+    const [gameX, gameY] = screenToGameCoords(clientX, clientY);
+    setMovement('stop'); // Stop keyboard movement
+    setPlayerPosition(gameX, gameY);
+  };
+
+  // Handle drag/touch move (local handler)
+  const handlePointerMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!gameState.isPlaying || gameState.isPaused || !isDraggingRef.current) return;
+    e.preventDefault();
+    
+    const clientX = 'touches' in e && e.touches.length > 0 
+      ? e.touches[0].clientX 
+      : 'clientX' in e ? e.clientX : 0;
+    const clientY = 'touches' in e && e.touches.length > 0 
+      ? e.touches[0].clientY 
+      : 'clientY' in e ? e.clientY : 0;
+    
+    const [gameX, gameY] = screenToGameCoords(clientX, clientY);
+    setPlayerPosition(gameX, gameY);
+  };
+
+  // Handle drag/touch end
+  const handlePointerEnd = (e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault();
+    isDraggingRef.current = false;
+  };
+
+  // Add global mouse/touch move handlers for smooth dragging
+  useEffect(() => {
+    if (!gameState.isPlaying || gameState.isPaused) return;
+
+    const handleGlobalMove = (e: MouseEvent | TouchEvent) => {
+      if (!isDraggingRef.current) return;
+      e.preventDefault();
+      const clientX = 'touches' in e && e.touches.length > 0 
+        ? e.touches[0].clientX 
+        : 'clientX' in e ? e.clientX : 0;
+      const clientY = 'touches' in e && e.touches.length > 0 
+        ? e.touches[0].clientY 
+        : 'clientY' in e ? e.clientY : 0;
+      const [gameX, gameY] = screenToGameCoords(clientX, clientY);
+      setPlayerPosition(gameX, gameY);
+    };
+
+    const handleGlobalEnd = () => {
+      isDraggingRef.current = false;
+    };
+
+    window.addEventListener('mousemove', handleGlobalMove);
+    window.addEventListener('touchmove', handleGlobalMove, { passive: false });
+    window.addEventListener('mouseup', handleGlobalEnd);
+    window.addEventListener('touchend', handleGlobalEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMove);
+      window.removeEventListener('touchmove', handleGlobalMove);
+      window.removeEventListener('mouseup', handleGlobalEnd);
+      window.removeEventListener('touchend', handleGlobalEnd);
+    };
+      }, [gameState.isPlaying, gameState.isPaused, setPlayerPosition, screenToGameCoords]);
+
+  // Keyboard controls (optional, can be kept)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!gameState.isPlaying || gameState.isPaused) return;
@@ -48,18 +147,6 @@ export function GameContainer() {
     };
   }, [gameState.isPlaying, gameState.isPaused, setMovement]);
 
-  // Touch controls handlers
-  const handleTouchStart = (direction: 'left' | 'right') => (e: React.TouchEvent | React.MouseEvent) => {
-    e.preventDefault(); // Prevent default touch actions (scrolling, zooming)
-    if (!gameState.isPlaying || gameState.isPaused) return;
-    setMovement(direction);
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent | React.MouseEvent) => {
-    e.preventDefault();
-    setMovement('stop');
-  };
-
   // Use Telegram viewport height if available, otherwise use dynamic viewport height
   const viewportHeight = isTelegramWebApp() 
     ? getStableViewportHeight() 
@@ -75,7 +162,14 @@ export function GameContainer() {
       <div className="w-full h-full md:max-w-4xl md:h-auto md:px-2 md:flex-1 md:flex md:items-center md:justify-center relative">
         <div 
           ref={containerRef}
-          className="relative overflow-hidden md:rounded-xl md:shadow-[0_0_50px_rgba(8,145,178,0.2)] bg-black md:ring-1 md:ring-white/10 w-full h-full md:aspect-auto md:h-[600px] md:w-[800px]"
+          className={`relative overflow-hidden md:rounded-xl md:shadow-[0_0_50px_rgba(8,145,178,0.2)] bg-black md:ring-1 md:ring-white/10 w-full h-full md:aspect-auto md:h-[600px] md:w-[800px] ${gameState.isPlaying && !gameState.isGameOver ? 'cursor-grab active:cursor-grabbing' : ''}`}
+          onMouseDown={gameState.isPlaying && !gameState.isGameOver ? handlePointerStart : undefined}
+          onMouseMove={gameState.isPlaying && !gameState.isGameOver ? handlePointerMove : undefined}
+          onMouseUp={gameState.isPlaying && !gameState.isGameOver ? handlePointerEnd : undefined}
+          onMouseLeave={gameState.isPlaying && !gameState.isGameOver ? handlePointerEnd : undefined}
+          onTouchStart={gameState.isPlaying && !gameState.isGameOver ? handlePointerStart : undefined}
+          onTouchMove={gameState.isPlaying && !gameState.isGameOver ? handlePointerMove : undefined}
+          onTouchEnd={gameState.isPlaying && !gameState.isGameOver ? handlePointerEnd : undefined}
         >
           {/* Inner container to scale logic coordinates to visual size */}
           <div className="absolute inset-0 w-full h-full">
@@ -98,11 +192,12 @@ export function GameContainer() {
               {/* Game Elements - Using % for positions to be responsive */}
               {gameState.isPlaying && !gameState.isGameOver && (
                 <>
-                  {/* Spaceship mapped from 0-800 to 0-100% */}
+                  {/* Spaceship - now can move in 2D */}
                   <div 
-                    className="absolute bottom-32 md:bottom-4 z-20 transition-transform duration-75"
+                    className="absolute z-20 transition-transform duration-75"
                     style={{ 
                       left: `${(playerX / GAME_WIDTH) * 100}%`,
+                      top: `${(playerY / GAME_HEIGHT) * 100}%`,
                       width: `${(SHIP_WIDTH / GAME_WIDTH) * 100}%`, // width relative to game width
                       height: `${(SHIP_HEIGHT / GAME_HEIGHT) * 100}%`, // height relative to game height
                     }}
@@ -143,35 +238,6 @@ export function GameContainer() {
         </div>
       </div>
 
-      {/* Mobile Controls Overlay - Only visible during gameplay */}
-      {/* Positioned absolutely at bottom for full screen mobile feel */}
-      {gameState.isPlaying && !gameState.isGameOver && (
-        <div className="absolute bottom-0 left-0 w-full p-6 pb-8 flex justify-between gap-4 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-none">
-          <Button 
-            variant="outline"
-            className="flex-1 h-20 bg-white/10 active:bg-cyan-500/40 border-white/20 rounded-2xl backdrop-blur-sm transition-all active:scale-95 touch-none select-none pointer-events-auto"
-            onMouseDown={handleTouchStart('left')}
-            onMouseUp={handleTouchEnd}
-            onMouseLeave={handleTouchEnd}
-            onTouchStart={handleTouchStart('left')}
-            onTouchEnd={handleTouchEnd}
-          >
-            <ArrowLeft className="w-10 h-10 text-white" />
-          </Button>
-          
-          <Button 
-            variant="outline"
-            className="flex-1 h-20 bg-white/10 active:bg-cyan-500/40 border-white/20 rounded-2xl backdrop-blur-sm transition-all active:scale-95 touch-none select-none pointer-events-auto"
-            onMouseDown={handleTouchStart('right')}
-            onMouseUp={handleTouchEnd}
-            onMouseLeave={handleTouchEnd}
-            onTouchStart={handleTouchStart('right')}
-            onTouchEnd={handleTouchEnd}
-          >
-            <ArrowRight className="w-10 h-10 text-white" />
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

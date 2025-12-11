@@ -17,12 +17,14 @@ const INITIAL_STATE: GameState = {
 export function useGameLogic() {
   const [gameState, setGameState] = useState<GameState>(INITIAL_STATE);
   const [playerX, setPlayerX] = useState(GAME_WIDTH / 2 - SHIP_WIDTH / 2);
+  const [playerY, setPlayerY] = useState(GAME_HEIGHT - SHIP_HEIGHT); // Start at bottom
   const [gameObjects, setGameObjects] = useState<GameObject[]>([]);
   const [effects, setEffects] = useState<GameEffect[]>([]);
   
   // Refs for loop to avoid dependency staleness
   const stateRef = useRef(gameState);
   const playerXRef = useRef(playerX);
+  const playerYRef = useRef(playerY);
   const objectsRef = useRef(gameObjects);
   const requestRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
@@ -32,6 +34,7 @@ export function useGameLogic() {
   // Sync refs
   useEffect(() => { stateRef.current = gameState; }, [gameState]);
   useEffect(() => { playerXRef.current = playerX; }, [playerX]);
+  useEffect(() => { playerYRef.current = playerY; }, [playerY]);
   useEffect(() => { objectsRef.current = gameObjects; }, [gameObjects]);
 
   // Cleanup effects
@@ -104,6 +107,7 @@ export function useGameLogic() {
     setGameObjects([]);
     setEffects([]);
     setPlayerX(GAME_WIDTH / 2 - SHIP_WIDTH / 2);
+    setPlayerY(GAME_HEIGHT - SHIP_HEIGHT); // Reset to bottom
     lastTimeRef.current = performance.now();
     movementRef.current = 0;
     
@@ -143,10 +147,9 @@ export function useGameLogic() {
   };
 
   const checkCollisions = () => {
-    // Ship position - focus on upper part for catching
-    const shipY = GAME_HEIGHT - SHIP_HEIGHT; // Top of ship
-    const shipTopY = shipY; // Top edge of ship
-    const shipBottomY = GAME_HEIGHT; // Bottom of ship
+    // Ship position - now uses playerY for vertical position
+    const shipTopY = playerYRef.current; // Top edge of ship (from playerY)
+    const shipBottomY = playerYRef.current + SHIP_HEIGHT; // Bottom edge of ship
     const shipCollisionWidth = SHIP_WIDTH * 0.7; // 70% of ship width for more precise collision
     const shipCollisionHeight = SHIP_HEIGHT * 0.6; // 60% of ship height for catching (upper part)
     
@@ -155,7 +158,7 @@ export function useGameLogic() {
     
     const shipRect = {
       x: playerXRef.current + (SHIP_WIDTH - shipCollisionWidth) / 2,
-      y: shipTopY, // Start from top of ship
+      y: shipTopY + (SHIP_HEIGHT - shipCollisionHeight) / 2, // Center collision zone on ship
       width: shipCollisionWidth,
       height: shipCollisionHeight
     };
@@ -258,7 +261,7 @@ export function useGameLogic() {
 
     // Add visual effect
     const effectX = playerXRef.current + SHIP_WIDTH / 2 - 20; // Center effect on ship
-    const effectY = GAME_HEIGHT - SHIP_HEIGHT / 2 - 20;
+    const effectY = playerYRef.current + SHIP_HEIGHT / 2 - 20; // Center effect on ship
 
     switch (obj.type) {
       case 'star':
@@ -313,14 +316,26 @@ export function useGameLogic() {
       startGame();
   };
 
+  const setPlayerPosition = useCallback((x: number, y?: number) => {
+    const clampedX = Math.max(0, Math.min(GAME_WIDTH - SHIP_WIDTH, x));
+    setPlayerX(clampedX);
+    
+    if (y !== undefined) {
+      const clampedY = Math.max(0, Math.min(GAME_HEIGHT - SHIP_HEIGHT, y));
+      setPlayerY(clampedY);
+    }
+  }, []);
+
   return {
     gameState,
     playerX,
+    playerY,
     gameObjects,
     effects,
     startGame,
     pauseGame,
     resetGame,
-    setMovement
+    setMovement,
+    setPlayerPosition
   };
 }

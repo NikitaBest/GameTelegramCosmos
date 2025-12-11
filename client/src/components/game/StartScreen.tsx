@@ -7,7 +7,7 @@ interface StartScreenProps {
 
 export function StartScreen({ onStart }: StartScreenProps) {
   return (
-    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm text-white p-4">
+    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm text-white p-4 pointer-events-auto">
       <div className="mb-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
         <h1 className="font-display text-4xl md:text-6xl font-black text-white mb-4 drop-shadow-[0_0_15px_rgba(6,182,212,0.5)] leading-tight">
           КОСМИЧЕСКИЙ СБОРЩИК
@@ -34,9 +34,12 @@ export function StartScreen({ onStart }: StartScreenProps) {
       </div>
 
       <Button 
-        onClick={onStart}
+        onClick={(e) => {
+          e.stopPropagation();
+          onStart();
+        }}
         size="lg"
-        className="font-display text-lg md:text-xl px-10 py-6 md:px-16 md:py-8 bg-cyan-600 hover:bg-cyan-500 text-white shadow-[0_0_20px_rgba(8,145,178,0.6)] transition-all hover:scale-105 border-none w-full md:w-auto rounded-full"
+        className="font-display text-lg md:text-xl px-10 py-6 md:px-16 md:py-8 bg-cyan-600 hover:bg-cyan-500 text-white shadow-[0_0_20px_rgba(8,145,178,0.6)] transition-all hover:scale-105 border-none w-full md:w-auto rounded-full pointer-events-auto z-50"
       >
         НАЧАТЬ МИССИЮ
       </Button>
