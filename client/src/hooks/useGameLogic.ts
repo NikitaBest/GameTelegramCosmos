@@ -126,29 +126,49 @@ export function useGameLogic() {
   };
 
   const checkCollisions = () => {
-    // More precise collision box for ship - centered and tighter
-    const shipCenterX = playerXRef.current + SHIP_WIDTH / 2;
-    const shipCenterY = GAME_HEIGHT - SHIP_HEIGHT / 2;
+    // Ship position - focus on upper part for catching
+    const shipY = GAME_HEIGHT - SHIP_HEIGHT; // Top of ship
+    const shipTopY = shipY; // Top edge of ship
+    const shipBottomY = GAME_HEIGHT; // Bottom of ship
     const shipCollisionWidth = SHIP_WIDTH * 0.7; // 70% of ship width for more precise collision
-    const shipCollisionHeight = SHIP_HEIGHT * 0.7; // 70% of ship height for more precise collision
+    const shipCollisionHeight = SHIP_HEIGHT * 0.6; // 60% of ship height for catching (upper part)
     
     const shipRect = {
-      x: shipCenterX - shipCollisionWidth / 2,
-      y: shipCenterY - shipCollisionHeight / 2,
+      x: playerXRef.current + (SHIP_WIDTH - shipCollisionWidth) / 2,
+      y: shipTopY, // Start from top of ship
       width: shipCollisionWidth,
       height: shipCollisionHeight
     };
 
     const newObjects = objectsRef.current.filter(obj => {
+      // Remove objects that are off screen
       if (obj.y > GAME_HEIGHT) return false;
 
+      const objBottom = obj.y + obj.height;
+      const objTop = obj.y;
+      const objCenterY = obj.y + obj.height / 2;
+      
+      // IMPORTANT: Only catch objects that are in the upper part of ship's collision zone
+      // Object's center should be in the range from ship's top to ship's middle
+      const catchingZoneTop = shipTopY - obj.height; // Allow some space above ship
+      const catchingZoneBottom = shipTopY + shipCollisionHeight; // Up to middle of ship
+      
+      // Skip if object is too far below the catching zone (already passed)
+      if (objTop > catchingZoneBottom + 15) {
+        // Object has passed below the catching zone - don't catch it
+        return true; // Keep object, it's already below
+      }
+      
+      // Skip if object is too far above
+      if (objBottom < catchingZoneTop) {
+        return true; // Keep object, it's too far above
+      }
+
       // More precise collision box for objects - smaller than visual size
-      // Stars and other items have smaller collision boxes for better precision
       const objectCollisionScale = obj.type === 'asteroid' ? 0.75 : 0.6; // Comets slightly larger collision, stars smaller
       const objCollisionWidth = obj.width * objectCollisionScale;
       const objCollisionHeight = obj.height * objectCollisionScale;
       const objCenterX = obj.x + obj.width / 2;
-      const objCenterY = obj.y + obj.height / 2;
       
       const objRect = { 
         x: objCenterX - objCollisionWidth / 2,
@@ -157,12 +177,22 @@ export function useGameLogic() {
         height: objCollisionHeight
       };
       
-      const isColliding = (
+      // Check horizontal overlap (ship and object must overlap horizontally)
+      const horizontalOverlap = (
         shipRect.x < objRect.x + objRect.width &&
-        shipRect.x + shipRect.width > objRect.x &&
+        shipRect.x + shipRect.width > objRect.x
+      );
+      
+      // Check vertical overlap (object must be in ship's catching zone)
+      const verticalOverlap = (
         shipRect.y < objRect.y + objRect.height &&
         shipRect.height + shipRect.y > objRect.y
       );
+      
+      // Additional check: object's center should be in the catching zone
+      const isInCatchingZone = objCenterY >= catchingZoneTop && objCenterY <= catchingZoneBottom;
+      
+      const isColliding = horizontalOverlap && verticalOverlap && isInCatchingZone;
 
       if (isColliding) {
         handleCollision(obj);
