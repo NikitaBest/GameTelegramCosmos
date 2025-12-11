@@ -150,6 +150,9 @@ export function useGameLogic() {
     const shipCollisionWidth = SHIP_WIDTH * 0.7; // 70% of ship width for more precise collision
     const shipCollisionHeight = SHIP_HEIGHT * 0.6; // 60% of ship height for catching (upper part)
     
+    // For comets (asteroids), use even smaller collision zone - only top 30% of ship
+    const cometCollisionHeight = SHIP_HEIGHT * 0.3; // Only top 30% for comets
+    
     const shipRect = {
       x: playerXRef.current + (SHIP_WIDTH - shipCollisionWidth) / 2,
       y: shipTopY, // Start from top of ship
@@ -164,21 +167,37 @@ export function useGameLogic() {
       const objBottom = obj.y + obj.height;
       const objTop = obj.y;
       const objCenterY = obj.y + obj.height / 2;
+      const isComet = obj.type === 'asteroid';
       
-      // IMPORTANT: Only catch objects that are in the upper part of ship's collision zone
-      // Object's center should be in the range from ship's top to ship's middle
-      const catchingZoneTop = shipTopY - obj.height; // Allow some space above ship
-      const catchingZoneBottom = shipTopY + shipCollisionHeight; // Up to middle of ship
+      // For comets: stricter collision - only top part of ship
+      // For stars: normal collision zone
+      const collisionZoneHeight = isComet ? cometCollisionHeight : shipCollisionHeight;
+      const collisionZoneTop = shipTopY - (isComet ? obj.height * 0.5 : obj.height); // Small buffer for comets
+      const collisionZoneBottom = shipTopY + collisionZoneHeight;
       
-      // Skip if object is too far below the catching zone (already passed)
-      if (objTop > catchingZoneBottom + 15) {
-        // Object has passed below the catching zone - don't catch it
-        return true; // Keep object, it's already below
-      }
-      
-      // Skip if object is too far above
-      if (objBottom < catchingZoneTop) {
-        return true; // Keep object, it's too far above
+      // For comets: check if it's in the top collision zone
+      if (isComet) {
+        // Comet must be in the top zone of ship
+        // Allow comet to be slightly below ship's top, but not too far
+        if (objBottom > shipTopY + cometCollisionHeight + 20) {
+          // Comet has passed too far below ship's top zone - no damage
+          return true; // Keep comet, it's already too far below
+        }
+        // Comet must be in the collision zone
+        if (objTop > collisionZoneBottom) {
+          return true; // Keep comet, it's too far above
+        }
+      } else {
+        // For stars: normal collision check
+        // Skip if object is too far below the catching zone (already passed)
+        if (objTop > collisionZoneBottom + 15) {
+          return true; // Keep object, it's already below
+        }
+        
+        // Skip if object is too far above
+        if (objBottom < collisionZoneTop) {
+          return true; // Keep object, it's too far above
+        }
       }
 
       // More precise collision box for objects - smaller than visual size
@@ -194,22 +213,31 @@ export function useGameLogic() {
         height: objCollisionHeight
       };
       
+      // Use comet-specific collision zone for comets
+      const shipCollisionRect = isComet ? {
+        ...shipRect,
+        height: cometCollisionHeight
+      } : shipRect;
+      
       // Check horizontal overlap (ship and object must overlap horizontally)
       const horizontalOverlap = (
-        shipRect.x < objRect.x + objRect.width &&
-        shipRect.x + shipRect.width > objRect.x
+        shipCollisionRect.x < objRect.x + objRect.width &&
+        shipCollisionRect.x + shipCollisionRect.width > objRect.x
       );
       
-      // Check vertical overlap (object must be in ship's catching zone)
+      // Check vertical overlap (object must be in ship's collision zone)
       const verticalOverlap = (
-        shipRect.y < objRect.y + objRect.height &&
-        shipRect.height + shipRect.y > objRect.y
+        shipCollisionRect.y < objRect.y + objRect.height &&
+        shipCollisionRect.height + shipCollisionRect.y > objRect.y
       );
       
-      // Additional check: object's center should be in the catching zone
-      const isInCatchingZone = objCenterY >= catchingZoneTop && objCenterY <= catchingZoneBottom;
+      // For comets: check if center is in top zone or object overlaps with top zone
+      // For stars: normal check
+      const isInCollisionZone = isComet 
+        ? (objCenterY <= shipTopY + cometCollisionHeight + 10 && objTop <= shipTopY + cometCollisionHeight + 20)
+        : (objCenterY >= collisionZoneTop && objCenterY <= collisionZoneBottom);
       
-      const isColliding = horizontalOverlap && verticalOverlap && isInCatchingZone;
+      const isColliding = horizontalOverlap && verticalOverlap && isInCollisionZone;
 
       if (isColliding) {
         handleCollision(obj);
