@@ -28,7 +28,7 @@ export function HUD({ gameState }: HUDProps) {
 
         {/* Level Indicator */}
         <div className="text-cyan-400/80 font-display text-sm pl-1">
-          LEVEL {gameState.level}
+          УРОВЕНЬ {gameState.level}
         </div>
       </div>
 
