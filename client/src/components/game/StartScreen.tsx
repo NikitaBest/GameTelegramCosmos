@@ -21,17 +21,17 @@ export function StartScreen({ onStart }: StartScreenProps) {
         <div className="bg-white/5 border border-white/10 p-4 rounded-lg flex flex-col items-center text-center">
           <Rocket className="w-8 h-8 text-cyan-400 mb-2" />
           <h3 className="font-bold text-cyan-100 mb-1">Движение</h3>
-          <p className="text-sm text-gray-400">Используй стрелки или мышь для управления</p>
+          <p className="text-sm text-gray-400">Только стрелки клавиатуры (← / →)</p>
         </div>
         <div className="bg-white/5 border border-white/10 p-4 rounded-lg flex flex-col items-center text-center">
           <Star className="w-8 h-8 text-yellow-400 mb-2" />
           <h3 className="font-bold text-cyan-100 mb-1">Собирай</h3>
-          <p className="text-sm text-gray-400">Лови звезды и кристаллы для очков</p>
+          <p className="text-sm text-gray-400">Звезды дают очки (+10)</p>
         </div>
         <div className="bg-white/5 border border-white/10 p-4 rounded-lg flex flex-col items-center text-center">
           <ShieldAlert className="w-8 h-8 text-red-500 mb-2" />
           <h3 className="font-bold text-cyan-100 mb-1">Избегай</h3>
-          <p className="text-sm text-gray-400">Уклоняйся от астероидов и врагов</p>
+          <p className="text-sm text-gray-400">Астероиды отнимают жизни</p>
         </div>
       </div>
 

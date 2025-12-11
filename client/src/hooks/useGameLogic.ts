@@ -71,31 +71,21 @@ export function useGameLogic() {
     requestRef.current = requestAnimationFrame(gameLoop);
   }, []);
 
-  const movePlayer = useCallback((direction: 'left' | 'right' | number) => {
-    if (typeof direction === 'number') {
-      // Direct position setting (mouse/touch)
-      const newX = Math.max(0, Math.min(GAME_WIDTH - SHIP_WIDTH, direction));
-      setPlayerX(newX);
-    } else {
-      // Keyboard movement
-      setPlayerX(prev => {
-        const step = 25; // Speed of keyboard movement
-        const newX = direction === 'left' ? prev - step : prev + step;
-        return Math.max(0, Math.min(GAME_WIDTH - SHIP_WIDTH, newX));
-      });
-    }
+  const movePlayer = useCallback((direction: 'left' | 'right') => {
+    setPlayerX(prev => {
+      const step = 25; // Speed of keyboard movement
+      const newX = direction === 'left' ? prev - step : prev + step;
+      return Math.max(0, Math.min(GAME_WIDTH - SHIP_WIDTH, newX));
+    });
   }, []);
 
   const spawnObject = () => {
     const rand = Math.random();
     let type: GameObjectType = 'star';
     
-    // Spawn probabilities
-    if (rand > 0.98) type = 'bonus';
-    else if (rand > 0.95) type = 'blackhole'; // Very rare
-    else if (rand > 0.85) type = 'crystal';
-    else if (rand > 0.70) type = 'enemy';
-    else if (rand > 0.55) type = 'asteroid';
+    // Spawn probabilities - SIMPLIFIED as requested
+    // 50% chance of Star (Good), 50% chance of Asteroid (Bad)
+    if (rand > 0.5) type = 'asteroid';
     else type = 'star';
 
     const object: GameObject = {
@@ -150,31 +140,14 @@ export function useGameLogic() {
     const currentState = stateRef.current;
     let newState = { ...currentState };
 
-    // Check multiplier expiration
-    if (newState.multiplier > 1 && Date.now() > newState.multiplierEndTime) {
-      newState.multiplier = 1;
-    }
-
     switch (obj.type) {
       case 'star':
-        newState.score += 10 * newState.multiplier;
-        break;
-      case 'crystal':
-        newState.score += 25 * newState.multiplier;
-        break;
-      case 'bonus':
-        newState.multiplier = 2;
-        newState.multiplierEndTime = Date.now() + 5000;
+        newState.score += 10;
         break;
       case 'asteroid':
-      case 'enemy':
         newState.lives -= 1;
-        // Visual feedback would go here (shake, red flash)
         break;
-      case 'blackhole':
-         // Slow down logic could go here, for now just a penalty
-         newState.score = Math.max(0, newState.score - 50);
-         break;
+      // Other cases removed/ignored as they shouldn't spawn
     }
 
     // Level up logic

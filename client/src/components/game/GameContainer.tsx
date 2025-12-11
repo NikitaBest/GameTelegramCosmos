@@ -36,24 +36,6 @@ export function GameContainer() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [gameState.isPlaying, gameState.isPaused, movePlayer]);
 
-  // Mouse/Touch controls
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!gameState.isPlaying || gameState.isPaused || !containerRef.current) return;
-    
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    movePlayer(x - 30); // Center ship
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!gameState.isPlaying || gameState.isPaused || !containerRef.current) return;
-    
-    const rect = containerRef.current.getBoundingClientRect();
-    const touch = e.touches[0];
-    const x = touch.clientX - rect.left;
-    movePlayer(x - 30);
-  };
-
   return (
     <div className="flex items-center justify-center min-h-screen bg-black p-4">
       <div 
@@ -63,8 +45,6 @@ export function GameContainer() {
           width: GAME_WIDTH,
           height: GAME_HEIGHT,
         }}
-        onMouseMove={handleMouseMove}
-        onTouchMove={handleTouchMove}
       >
         {/* Background Layer */}
         <div 
