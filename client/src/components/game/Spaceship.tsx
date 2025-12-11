@@ -9,20 +9,14 @@ interface SpaceshipProps {
 export function Spaceship({ x }: SpaceshipProps) {
   return (
     <motion.div
-      className="absolute bottom-4 z-20"
-      style={{ 
-        left: x,
-        width: SHIP_WIDTH,
-        height: SHIP_HEIGHT,
-      }}
+      className="relative z-20 w-full h-full" // Size is now controlled by parent container
       initial={false}
-      animate={{ x: 0 }} // We control 'left' directly for performance in loop, but motion helps with smooth entry if needed
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      // Removed fixed style left/width/height as they are handled by parent wrapper now
     >
       <div className="relative w-full h-full group">
         {/* Engine Glow */}
-        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-8 bg-cyan-500 blur-lg opacity-80 animate-pulse" />
-        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-6 bg-white blur-md" />
+        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[30%] h-[50%] bg-cyan-500 blur-lg opacity-80 animate-pulse" />
+        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-[15%] h-[40%] bg-white blur-md" />
         
         {/* Ship Body - Using Lucide Rocket but styled */}
         <Rocket 

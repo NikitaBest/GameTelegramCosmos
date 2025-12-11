@@ -26,6 +26,10 @@ export function useGameLogic() {
   const lastTimeRef = useRef<number>(0);
   const spawnTimerRef = useRef<number>(0);
 
+  // New ref to track movement input state (left/right pressed)
+  // -1 = left, 0 = none, 1 = right
+  const movementRef = useRef<number>(0);
+
   // Sync refs
   useEffect(() => { stateRef.current = gameState; }, [gameState]);
   useEffect(() => { playerXRef.current = playerX; }, [playerX]);
@@ -39,6 +43,21 @@ export function useGameLogic() {
 
     const deltaTime = time - lastTimeRef.current;
     lastTimeRef.current = time;
+
+    // --- PLAYER MOVEMENT ---
+    // Smooth continuous movement based on input state
+    if (movementRef.current !== 0) {
+      const speed = 12 * (deltaTime / 16); // Normalize speed based on frame time
+      const newX = playerXRef.current + (movementRef.current * speed);
+      const clampedX = Math.max(0, Math.min(GAME_WIDTH - SHIP_WIDTH, newX));
+      
+      // Update state if changed
+      if (clampedX !== playerXRef.current) {
+        setPlayerX(clampedX);
+      }
+    }
+
+    // --- GAME LOGIC ---
 
     // Spawn objects
     spawnTimerRef.current += deltaTime;
@@ -66,17 +85,17 @@ export function useGameLogic() {
     setGameObjects([]);
     setPlayerX(GAME_WIDTH / 2 - SHIP_WIDTH / 2);
     lastTimeRef.current = performance.now();
+    movementRef.current = 0;
     
     if (requestRef.current) cancelAnimationFrame(requestRef.current);
     requestRef.current = requestAnimationFrame(gameLoop);
   }, []);
 
-  const movePlayer = useCallback((direction: 'left' | 'right') => {
-    setPlayerX(prev => {
-      const step = 25; // Speed of keyboard movement
-      const newX = direction === 'left' ? prev - step : prev + step;
-      return Math.max(0, Math.min(GAME_WIDTH - SHIP_WIDTH, newX));
-    });
+  // Update movement state rather than direct position
+  const setMovement = useCallback((direction: 'left' | 'right' | 'stop') => {
+    if (direction === 'left') movementRef.current = -1;
+    else if (direction === 'right') movementRef.current = 1;
+    else movementRef.current = 0;
   }, []);
 
   const spawnObject = () => {
@@ -189,6 +208,6 @@ export function useGameLogic() {
     startGame,
     pauseGame,
     resetGame,
-    movePlayer
+    setMovement // Exporting new control function
   };
 }

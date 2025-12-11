@@ -7,7 +7,7 @@ interface FallingObjectProps {
 }
 
 export function FallingObject({ object }: FallingObjectProps) {
-  const { type, x, y, width, height } = object;
+  const { type } = object;
 
   const getIcon = () => {
     switch (type) {
@@ -22,15 +22,7 @@ export function FallingObject({ object }: FallingObjectProps) {
   };
 
   return (
-    <div
-      className="absolute z-10 flex items-center justify-center"
-      style={{
-        left: x,
-        top: y,
-        width,
-        height,
-      }}
-    >
+    <div className="w-full h-full flex items-center justify-center">
       <motion.div
         animate={{ rotate: type === 'asteroid' ? 360 : 0 }}
         transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
